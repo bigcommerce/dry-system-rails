@@ -1,5 +1,6 @@
 require 'dry/system/container'
 require 'rails/railtie'
+require 'dry/system/rails/patches'
 
 module Dry
   module System
@@ -15,6 +16,7 @@ module Dry
 
         Railtie.configure do
           config.container = container
+          config.injector = container.injector
         end
       end
 
@@ -45,11 +47,15 @@ module Dry
           end
           app_namespace.const_set(:Container, container)
           container.config.name = name
-          container.finalize!
+          container.finalize!(freeze: freeze?)
         end
 
         def name
           app_namespace.name.underscore.to_sym
+        end
+
+        def freeze?
+          ::Rails.application.config.eager_load && ::Rails.application.config.cache_classes
         end
 
         # TODO: we had to rename namespace=>app_namespace because
@@ -65,6 +71,10 @@ module Dry
 
         def container
           Railtie.config.container
+        end
+
+        def intjector
+          Railtie.config.injector
         end
       end
     end
